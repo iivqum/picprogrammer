@@ -74,15 +74,15 @@ int main(int argc, char **argv){
 	while (1){
 		readbyte(&buf);
 		switch (buf){
-			case 0x03: printf("entered programming mode\n"); break;
-			case 0x40:
+			case 0x01: printf("entered programming mode\n"); break;
+			case 0x02:
 				char buf2[2];
 				readbyte(buf2);
 				readbyte(buf2+1);
 				printf("%d\n",*(unsigned short *)buf2);
 				break;
-			case 0x50: printf("programming...\n"); break;
-			case 0x60: printf("done\n"); break;
+			case 0x03: printf("programming...\n"); break;
+			case 0x04: printf("done\n"); break;
 		}
 		buf=0x00;
 	}
