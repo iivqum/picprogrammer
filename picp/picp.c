@@ -85,11 +85,11 @@ int main(int argc, char **argv){
 	
 	COMMTIMEOUTS timeouts;
 	
-    timeouts.ReadIntervalTimeout=1;
-    timeouts.ReadTotalTimeoutMultiplier=1000;
-    timeouts.ReadTotalTimeoutConstant=1;
-    timeouts.WriteTotalTimeoutMultiplier=1000;
-    timeouts.WriteTotalTimeoutConstant=1;	
+	timeouts.ReadIntervalTimeout=1;
+	timeouts.ReadTotalTimeoutMultiplier=1000;
+	timeouts.ReadTotalTimeoutConstant=1;
+	timeouts.WriteTotalTimeoutMultiplier=1000;
+	timeouts.WriteTotalTimeoutConstant=1;	
 	
 	GetCommState(PORT,&mode);
 	
@@ -117,27 +117,33 @@ int main(int argc, char **argv){
 		fp=readfile(argv[3]);
 		if (fp!=NULL){
 			//writing to PIC
-			
 			int eof=0;
 			unsigned char c;
 			unsigned char data[32];
 			while (!feof(fp) && !eof){
 				c=fgetc(fp);
 				if (c==':'){
-					unsigned char ln,adr1,adr2,rd;
+					unsigned char ln,adr1,adr2,rd,cs;
 					ln=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					adr1=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					adr2=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					rd=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
-					
+					unsigned char checksum=ln+adr1+adr2+rd;
 					if (rd==0x01){
 						eof=1;
 					}else{
 						for (int i=0;i<ln;i++){
 							c=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
-							
-							printf("%d ",c);
+							data[i]=c;
+							checksum+=c;
 						}
+						checksum=~checksum+1;
+						cs=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
+						if (checksum~=cs){
+							printf("checksum failed! terminating\n")
+							break;
+						}
+						//now proceed with sending the data
 					}
 					printf("\n");
 				}
