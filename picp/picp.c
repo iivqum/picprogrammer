@@ -79,11 +79,10 @@ int main(int argc, char **argv){
 	}
 	
 	DCB mode;
+	COMMTIMEOUTS timeouts;
 	
 	memset(&mode,0,sizeof(DCB));
 	mode.DCBlength=sizeof(DCB);
-	
-	COMMTIMEOUTS timeouts;
 	
 	timeouts.ReadIntervalTimeout=1;
 	timeouts.ReadTotalTimeoutMultiplier=1000;
@@ -92,11 +91,6 @@ int main(int argc, char **argv){
 	timeouts.WriteTotalTimeoutConstant=1;	
 	
 	GetCommState(PORT,&mode);
-	
-//	mode.fDsrSensitivity=FALSE;
-//	mode.fRtsControl=RTS_CONTROL_TOGGLE;
-//	mode.fDtrControl=DTR_CONTROL_HANDSHAKE;
-//	mode.fOutX=TRUE;
 	
 	if (!BuildCommDCBA("baud=2400 parity=n data=8 stop=1",&mode)||
 			!SetCommState(PORT,&mode)||
@@ -128,6 +122,7 @@ int main(int argc, char **argv){
 					adr1=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					adr2=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					rd=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
+//not considering different record types, probably should
 					unsigned char checksum=ln+adr1+adr2+rd;
 					if (rd==0x01){
 						eof=1;
@@ -139,8 +134,8 @@ int main(int argc, char **argv){
 						}
 						checksum=~checksum+1;
 						cs=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
-						if (checksum~=cs){
-							printf("checksum failed! terminating\n")
+						if (checksum!=cs){
+							printf("checksum failed! terminating\n");
 							break;
 						}
 						//now proceed with sending the data
@@ -162,40 +157,7 @@ int main(int argc, char **argv){
 	}else{
 		printf("invalid command\n");
 	}
-		
 	fclose(fp);	
-/*
-	querydevice();
-	
-	unsigned char buf=0x00;
-	int n=0;
-	int done=0;
-	
-	
-	while (!done){
-		readbyte(&buf);
-		switch (buf){
-			case 0x07: printf("entered programming mode\n"); break;
-			case 0x05:
-				unsigned char buf2[2];
-				readbyte(buf2);
-				readbyte(buf2+1);
-				unsigned short r=0;
-				r|=buf2[0];
-				r|=buf2[1]<<8;
-				printf("%03x ",r);
-				n++;
-				if (n==20){
-					printf("\n");
-					n=0;
-				}
-				break;
-			case 0x03: printf("clearing memory...\n"); break;
-			case 0x04: printf("\ndone\n"); done=1; break;
-		}
-		buf=0x00;
-	}
-*/		
 	CloseHandle(PORT);
 	return 0;
 }
