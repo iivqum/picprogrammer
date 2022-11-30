@@ -1,7 +1,5 @@
 #include <util/delay.h>
-
-//programming pin
-
+//using pins d2,d3,d4
 #define PPORT PORTD
 #define PDDR DDRD
 #define PPIN PIND
@@ -9,7 +7,11 @@
 #define PDAT 3
 #define PMCLR 4
 
-#define DEBUG_DUMP_MEMORY
+/*
+this implementation is specific to the PIC10F202, not tried on other pics
+
+the program memory needs to be cleared to all 1s before programming
+*/
 
 void pclk1(void){PPORT|=(1<<PCLK);}
 void pclk0(void){PPORT&=~(1<<PCLK);}
@@ -37,7 +39,9 @@ void pcycle(void){
 void exit_prog_mode(void){
   pclk0();
   pdat0();
+  _delay_us(10);
   pmclr1();
+  _delay_ms(10);
 }
 
 void enter_prog_mode(void){
@@ -58,7 +62,7 @@ void usart_rx(unsigned char *d){
 }
 
 void psend(unsigned short d,unsigned char c){
-  //pdatd1();
+  pdatd1();
   for (unsigned char i=0;i<c;i++){
     pclk1();
     switch (d&0x01){
@@ -70,15 +74,16 @@ void psend(unsigned short d,unsigned char c){
     pclk0();
     _delay_us(10);
   }
+  pdat0();
 }
 
 unsigned short pread(void){
   unsigned short buf=0;
-//ignore start bit
-  pcycle();
 //disable pullup and make data pin an input
   pdat0();
   pdatd0();
+//ign ore start bit
+  pcycle();
   for (int i=0;i<14;i++){
     pclk1();
     _delay_us(10);
@@ -105,52 +110,51 @@ int main(void){
   pclkd1();
   pdatd1();
   pmclrd1();
-//signal the pc that were ready
-  char buf;
-  usart_rx(&buf);
-  if (buf==0x01)usart_tx(0x02);
-//bulk memory erase
-  //psend(0x09,6);
-  //delay_ms(10);
-  enter_prog_mode();
-#ifdef DEBUG_CLEAR
-  psend(0x06,6);
-  usart_tx(0x03);
-  for (int i=0x000;i<0x1FE;i++){
-    psend(0x02,6);
-    psend(0,16);
-    psend(0x08,6);
-    _delay_ms(2);
-    psend(0x0e,6);
-    _delay_us(100);
-    psend(0x06,6);
-  } 
-  usart_tx(0x04);
-  exit_prog_mode();
-  _delay_ms(1);
-  enter_prog_mode();
-#endif 
-#ifdef DEBUG_DUMP_MEMORY
-  psend(0x06,6);
-  for (int i=0x000;i<0x1FE;i++){
-    psend(0x04,6);
-    unsigned short d=pread();
-    usart_tx(0x02);
-    usart_tx(d);
-    usart_tx(d>>8);
-    psend(0x06,6);
+  char buf=0;
+  while (1){
+    usart_rx(&buf);
+    switch(buf){
+      case 0x01:
+        usart_tx(0x02);
+        break;
+      case 0x02://clear memory to 1
+        enter_prog_mode();
+        usart_tx(0x03);
+        psend(0x09,6);
+        _delay_ms(10);
+        exit_prog_mode();
+        break;
+      case 0x03:
+        enter_prog_mode();
+        for (int i=0;i<0x1fe;i++){
+          psend(0x06,6);
+          psend(0x04,6);
+          unsigned short d=pread();
+          usart_tx(0x05);
+          usart_tx(d);
+          usart_tx(d>>8);
+        }
+        exit_prog_mode();
+        break;
+      case 0x04:
+        enter_prog_mode();
+        for (int i=0;i<20;i++){
+          psend(0x06,6);
+          psend(0x02,6);
+
+          psend(0x01,1);//start bit
+          psend(0xded,12);//data
+          psend(0xff,3);//stop plus 2 msb ignored
+
+          psend(0x08,6);
+          _delay_ms(2);
+          psend(0x0e,6);
+          _delay_us(200);
+        }
+        exit_prog_mode();
+        break;
+    }
+    usart_tx(0x04);
   }
-  exit_prog_mode();
-  _delay_ms(1);
-  enter_prog_mode();
-#endif
-
-
-
-
-
-
-  exit_prog_mode();
-
   return 0;
 }
