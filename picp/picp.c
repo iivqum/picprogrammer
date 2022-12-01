@@ -39,6 +39,7 @@ unsigned char hex2byte(unsigned char h){
 		if (tb1[i]==h||tb2[i]==h)
 			return i;
 	}
+	return 0;
 }
 
 FILE *readfile(char *f){
@@ -109,8 +110,9 @@ int main(int argc, char **argv){
 	
 	if (!strcmp(argv[2],"w")){
 		fp=readfile(argv[3]);
+//clear internal buffer		
+		writebyte(0x05);
 		if (fp!=NULL){
-			//writing to PIC
 			int eof=0;
 			unsigned char c;
 			unsigned char data[32];
@@ -119,14 +121,15 @@ int main(int argc, char **argv){
 				if (c==':'){
 					unsigned char ln,adr1,adr2,rd,cs;
 					ln=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
+//upper/lower address bytes
 					adr1=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					adr2=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					rd=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
-//not considering different record types, probably should
-					unsigned char checksum=ln+adr1+adr2+rd;
+//not considering different record types
 					if (rd==0x01){
 						eof=1;
 					}else{
+						unsigned char checksum=ln+adr1+adr2+rd;
 						for (int i=0;i<ln;i++){
 							c=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 							data[i]=c;
@@ -138,11 +141,25 @@ int main(int argc, char **argv){
 							printf("checksum failed! terminating\n");
 							break;
 						}
-						//now proceed with sending the data
+/*
+	the arduino expects a 16 bit address plus the record length
+	and the data
+	
+	0x03 byte tells the arduino that a data record should be placed
+	inside the arduino's internal buffer, this buffer is copied into the pic
+	0x04 byte tells arduino to copy its internal buffer to the pic
+	0x05 byte clears the internal buffer
+*/				
+						writebyte(0x03);
+						writebyte(adr1);
+						writebyte(adr2);	
+						writebyte(ln>>2);
+						for (int i=0;i<ln;i++)
+							writebyte(data[i]);
 					}
-					printf("\n");
 				}
 			}
+			writebyte(0x04);
 		}else{
 			printf("invalid file\n");
 		}

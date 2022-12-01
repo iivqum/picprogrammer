@@ -13,6 +13,8 @@ this implementation is specific to the PIC10F202, not tried on other pics
 the program memory needs to be cleared to all 1s before programming
 */
 
+unsigned short flash[512];
+
 void pclk1(void){PPORT|=(1<<PCLK);}
 void pclk0(void){PPORT&=~(1<<PCLK);}
 void pclkd1(void){PDDR|=(1<<PCLK);}
@@ -125,6 +127,12 @@ int main(void){
         exit_prog_mode();
         break;
       case 0x03:
+        memset(flash,1,sizeof(flash));
+        usart_tx(&buf);
+
+
+
+
         enter_prog_mode();
         for (int i=0;i<0x1fe;i++){
           psend(0x06,6);
@@ -153,6 +161,8 @@ int main(void){
         }
         exit_prog_mode();
         break;
+      case 0x05:
+        memset(flash,0xff,sizeof(flash));
     }
     usart_tx(0x04);
   }
