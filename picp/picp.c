@@ -19,7 +19,7 @@ unsigned char readbyte(void){
 	return byte;
 }
 
-void querydevice(void){
+void rspv(void){
 //wait for bootloader
 	char buf;
 	printf("waiting for arduino\n");
@@ -125,7 +125,11 @@ int main(int argc, char **argv){
 					adr1=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					adr2=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					rd=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
-//not considering different record types
+/*
+	not considering different record types
+	however for PICs with larger flash memory
+	it is necessary to use an extended address space
+*/
 					if (rd==0x01){
 						eof=1;
 					}else{
@@ -151,6 +155,7 @@ int main(int argc, char **argv){
 	0x05 byte clears the internal buffer
 */				
 						writebyte(0x03);
+						device_rspv();
 						writebyte(adr1);
 						writebyte(adr2);	
 						writebyte(ln>>2);
@@ -167,7 +172,7 @@ int main(int argc, char **argv){
 		fp=readfile(argv[3]);
 		if (fp!=NULL){
 			//reading from PIC
-			
+			//todo
 		}else{
 			printf("invalid file\n");
 		}
