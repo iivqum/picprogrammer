@@ -81,6 +81,14 @@ void psend(unsigned short d,unsigned char c){
   pdat0();
 }
 
+void pclear(){
+  enter_prog_mode();
+  usart_tx(0x03);
+  psend(0x09,6);
+  _delay_ms(10);
+  exit_prog_mode();
+}
+
 unsigned short pread(void){
   unsigned short buf=0;
 //disable pullup and make data pin an input
@@ -98,6 +106,7 @@ unsigned short pread(void){
 //ignore stop bit
   pcycle();
   pdatd1();
+  pdat0();
   return buf;
 }
 
@@ -122,12 +131,9 @@ int main(void){
       case 0x01:
         usart_tx(0x02);
         break;
-      case 0x02://clear memory to 1
-        enter_prog_mode();
-        usart_tx(0x03);
-        psend(0x09,6);
-        _delay_ms(10);
-        exit_prog_mode();
+      case 0x02:
+        
+        
         break;
       case 0x03:
         {
@@ -147,6 +153,7 @@ int main(void){
         }
         break;
       case 0x04:
+        pclear();
         enter_prog_mode();
         for (int i=0;i<FLASH_SIZE;i++){
           psend(0x06,6);
