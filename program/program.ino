@@ -90,11 +90,11 @@ void pclear(){
 }
 
 unsigned short pread(void){
-  unsigned short buf=0;
+  unsigned short buf=0x0000;
 //disable pullup and make data pin an input
   pdat0();
   pdatd0();
-//ign ore start bit
+//ignore start bit
   pcycle();
   for (int i=0;i<14;i++){
     pclk1();
@@ -132,8 +132,14 @@ int main(void){
         usart_tx(0x02);
         break;
       case 0x02:
-        
-        
+        enter_prog_mode();
+        for (int i=0;i<FLASH_SIZE;i++){
+          psend(0x06,6);
+          psend(0x04,6);
+          flash[i]=pread();
+        }
+        exit_prog_mode();
+        usart_tx(0x01);        
         break;
       case 0x03:
         {
@@ -157,6 +163,8 @@ int main(void){
         enter_prog_mode();
         for (int i=0;i<FLASH_SIZE;i++){
           psend(0x06,6);
+          if (flash[i]==0xffff)
+            continue;
           psend(0x02,6);
           psend(0x01,1);//start bit
           psend(flash[i],12);//data
@@ -167,6 +175,7 @@ int main(void){
           _delay_us(200);
         }
         exit_prog_mode();
+        usart_tx(0x01);
         break;
       case 0x05:
         memset(flash,0xff,sizeof(flash));
@@ -179,7 +188,7 @@ int main(void){
           adr=buf<<8;
           usart_rx(&buf);
           adr|=buf;
-          if (adr>=FLASH_SIZE)
+          if ((adr>>1)>=FLASH_SIZE)
             adr=0;          
           usart_tx(ptr[adr]);
         }
