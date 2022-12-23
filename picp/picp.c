@@ -15,7 +15,7 @@ unsigned char readbyte(void){
 	int n;
 	char byte=0;
 	ReadFile(PORT,&byte,1,(void*)&n,NULL);
-	//if (n!=1)printf("read failure or timeout\n");
+	if (n!=1)printf("read failure or timeout\n");
 	return byte;
 }
 
@@ -42,13 +42,24 @@ unsigned char hex2byte(unsigned char h){
 	return 0;
 }
 
+void debug_flash_buffer(void){
+	for (unsigned short i=0;i<512*2;i++){
+		writebyte(0x06);
+		writebyte(i>>8);
+		writebyte(i&0xff);
+		printf("%02x ",readbyte());
+		if ((i+1)%35==0)
+			printf("\n");
+	}
+}
+
 FILE *readfile(char *f){
 	FILE *fp=fopen(f,"rb+");
 	if (fp==NULL){
 		int ok=0;
 		char dir[MAX_PATH];
 		char *ext=malloc(strlen(f)+1);
-		if (ext~=NULL){
+		if (ext!=NULL){
 			ext[0]='\\';
 			strcpy(ext+1,f);
 			memset(dir,MAX_PATH,0);
@@ -56,7 +67,7 @@ FILE *readfile(char *f){
 			if (strlen(dir)+strlen(ext)<=MAX_PATH){
 				strcat(dir,ext);
 				fp=fopen(dir,"rb+");
-				if (fp~=NULL)
+				if (fp!=NULL)
 					ok=1;
 			}
 			free(ext);
@@ -107,7 +118,7 @@ int main(int argc, char **argv){
 	printf("port success\n");
 	printf("baud %d parity %d stop %d data %d\n",mode.BaudRate,mode.fParity,mode.StopBits+1,mode.ByteSize);
 	
-	//rspv();
+	rspv();
 	
 	FILE *fp=NULL;
 	
@@ -115,8 +126,8 @@ int main(int argc, char **argv){
 		fp=readfile(argv[3]);
 		if (fp!=NULL){
 //clear internal buffer		
-			writebyte(0x05);			
-			
+			writebyte(0x05);
+			readbyte();
 			int eof=0;
 			unsigned char c;
 			unsigned char data[32];
@@ -161,13 +172,16 @@ int main(int argc, char **argv){
 						writebyte(0x03);
 						writebyte(adr1);
 						writebyte(adr2);	
-						writebyte(ln>>2);
+						writebyte(ln);
 						for (int i=0;i<ln;i++)
 							writebyte(data[i]);
+//waits till the aurdino is done processing the data
+						readbyte();
 					}
 				}
 			}
-			writebyte(0x04);
+			debug_flash_buffer();
+			//writebyte(0x04);
 		}
 	}else if(!strcmp(argv[2],"r")){
 		fp=readfile(argv[3]);

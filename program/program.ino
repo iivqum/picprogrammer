@@ -13,7 +13,9 @@ this implementation is specific to the PIC10F202, not tried on other pics
 the program memory needs to be cleared to all 1s before programming
 */
 
-unsigned short flash[512];
+#define FLASH_SIZE 512
+
+unsigned short flash[FLASH_SIZE];
 
 void pclk1(void){PPORT|=(1<<PCLK);}
 void pclk0(void){PPORT&=~(1<<PCLK);}
@@ -112,7 +114,8 @@ int main(void){
   pclkd1();
   pdatd1();
   pmclrd1();
-  char buf=0;
+  unsigned char buf;
+  unsigned short adr;
   while (1){
     usart_rx(&buf);
     switch(buf){
@@ -127,33 +130,30 @@ int main(void){
         exit_prog_mode();
         break;
       case 0x03:
-        memset(flash,1,sizeof(flash));
-        usart_tx(&buf);
-
-
-
-
-        enter_prog_mode();
-        for (int i=0;i<0x1fe;i++){
-          psend(0x06,6);
-          psend(0x04,6);
-          unsigned short d=pread();
-          usart_tx(0x05);
-          usart_tx(d);
-          usart_tx(d>>8);
+        {
+          usart_rx(&buf);
+          adr=buf<<8;
+          usart_rx(&buf);        
+          adr|=buf;
+          usart_rx(&buf);         
+          unsigned char *pos=(unsigned char*)&flash[adr];
+          unsigned char len=buf;
+          for (int i=0;i<len;i++){
+            usart_rx(&buf);            
+            *pos=buf;
+            pos++;                                
+          }
+          usart_tx(0x01);
         }
-        exit_prog_mode();
         break;
       case 0x04:
         enter_prog_mode();
-        for (int i=0;i<20;i++){
+        for (int i=0;i<FLASH_SIZE;i++){
           psend(0x06,6);
           psend(0x02,6);
-
           psend(0x01,1);//start bit
-          psend(0xded,12);//data
+          psend(flash[i],12);//data
           psend(0xff,3);//stop plus 2 msb ignored
-
           psend(0x08,6);
           _delay_ms(2);
           psend(0x0e,6);
@@ -163,8 +163,21 @@ int main(void){
         break;
       case 0x05:
         memset(flash,0xff,sizeof(flash));
+        usart_tx(0x01);        
+        break;
+      case 0x06:
+        {
+          unsigned char *ptr=(unsigned char*)flash;
+          usart_rx(&buf);
+          adr=buf<<8;
+          usart_rx(&buf);
+          adr|=buf;
+          if (adr>=FLASH_SIZE)
+            adr=0;          
+          usart_tx(ptr[adr]);
+        }
+        break;
     }
-    usart_tx(0x04);
   }
   return 0;
 }
