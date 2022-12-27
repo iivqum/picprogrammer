@@ -49,13 +49,11 @@ void debug_flash_buffer(void){
 		writebyte(0x06);
 		writebyte(i>>8);
 		writebyte(i&0xff);
-		
 		unsigned char hi=readbyte();
 		unsigned char lo=readbyte();
 		unsigned short word=(hi<<8)|lo;
-		
-		printf("%04x ",word);
-		if ((i+1)%16==0)
+		printf("%03x ",word);
+		if ((i+1)%12==0)
 			printf("\n");
 	}
 }
@@ -200,14 +198,20 @@ inside the arduino's internal buffer, this buffer is copied into the pic
 //for some reason, however a while loop works. I'll need to find out why
 			while(readbyte());
 			printf("done\n");
-			debug_pic_memory();
 		}
 	}else if(!strcmp(argv[2],"r")){
+/*
+//this will write the pic contents to a hex file or something later
 		fp=readfile(argv[3]);
 		if (fp!=NULL){
 			//reading from PIC
 			//todo
 		}
+*/
+		printf("------------------\n");
+		printf("PROGRAM MEMORY\n");
+		printf("------------------\n");
+		debug_pic_memory();
 	}else{
 		printf("invalid command\n");
 	}
