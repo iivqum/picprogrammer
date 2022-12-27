@@ -49,9 +49,13 @@ void debug_flash_buffer(void){
 		writebyte(0x06);
 		writebyte(i>>8);
 		writebyte(i&0xff);
-		printf("%02x ",readbyte());
-		printf("%02x ",readbyte());
-		if ((i+1)%35==0)
+		
+		unsigned char hi=readbyte();
+		unsigned char lo=readbyte();
+		unsigned short word=(hi<<8)|lo;
+		
+		printf("%04x ",word);
+		if ((i+1)%16==0)
 			printf("\n");
 	}
 }
