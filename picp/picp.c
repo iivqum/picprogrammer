@@ -45,13 +45,22 @@ unsigned char hex2byte(unsigned char h){
 }
 
 void debug_flash_buffer(void){
-	for (unsigned short i=0;i<FLASH_SIZE;i++){
+	unsigned char hi,lo;
+	unsigned short word;
+	writebyte(0x06);
+	writebyte(0x03);
+	writebyte(0xff);
+	hi=readbyte();
+	lo=readbyte();
+	word=(hi<<8)|lo;
+	printf("CONFIG BITS: %03x\n\n",word);
+	for (unsigned short i=0;i<0x205;i++){
 		writebyte(0x06);
 		writebyte(i>>8);
 		writebyte(i&0xff);
-		unsigned char hi=readbyte();
-		unsigned char lo=readbyte();
-		unsigned short word=(hi<<8)|lo;
+		hi=readbyte();
+		lo=readbyte();
+		word=(hi<<8)|lo;
 		printf("%03x ",word);
 		if ((i+1)%12==0)
 			printf("\n");
@@ -151,11 +160,7 @@ int main(int argc, char **argv){
 					adr1=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					adr2=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
 					rd=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
-/*
-not considering different record types
-however for PICs with larger flash memory
-it is necessary to use an extended address space
-*/
+//todo add support for extended address spaces for other pics
 					if (rd==0x01){
 						eof=1;
 					}else if(rd==0x00){
@@ -171,6 +176,10 @@ it is necessary to use an extended address space
 							printf("checksum failed! terminating\n");
 							break;
 						}
+						unsigned short adr=adr1<<8;
+						adr|=adr2;
+//divide address by 2 since its a byte address						
+						adr=adr>>1;
 /*
 the arduino expects a 16 bit address plus the record length
 and the data
@@ -182,12 +191,11 @@ inside the arduino's internal buffer, this buffer is copied into the pic
 0x05 byte clears the internal buffer
 */				
 						writebyte(0x03);
-						writebyte(adr1);
-						writebyte(adr2);	
+						writebyte(adr>>8);
+						writebyte(adr&0xff);
 						writebyte(ln>>1);
 						for (int i=0;i<ln;i++)
 							writebyte(data[i]);
-//waits till the aurdino is done processing the data
 						readbyte();
 					}
 				}

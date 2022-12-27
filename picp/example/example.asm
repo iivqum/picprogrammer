@@ -2,6 +2,8 @@
 
  #include p10f202.inc
 
+ __config _WDTE_OFF & _MCLRE_OFF & _CP_OFF
+
 ca equ 0x08
 cb equ 0x09
 
@@ -40,7 +42,5 @@ main_loop
  comf GPIO,F
  call delay_250ms
  goto main_loop
-
- goto $
 
  end

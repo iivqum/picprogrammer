@@ -8,11 +8,13 @@
 #define PMCLR 4
 
 /*
-this implementation is specific to the PIC10F202, not tried on other pics
+this implementation is specific to the PIC10F202
 */
 
-#define FLASH_SIZE 512//in words
-unsigned short flash[FLASH_SIZE];//each byte grouping is big endian
+#define FLASH_BUFFER_SIZE 517//user memory + 4 userid words + oscscal word
+
+unsigned short flash[FLASH_BUFFER_SIZE];
+unsigned short config_bits;
 
 void pclk1(void){PPORT|=(1<<PCLK);}
 void pclk0(void){PPORT&=~(1<<PCLK);}
@@ -79,11 +81,16 @@ void psend(unsigned short d,unsigned char c){
   pdat0();  
 }
 
-void pclear(){
+void pclear(void){
   enter_prog_mode();
   psend(0x09,6);
   _delay_ms(10);
   exit_prog_mode();
+}
+
+void pincr_pc(int n){
+  for (int i=1;i<n;i++)
+    psend(0x06,6);
 }
 
 unsigned short pread(void){
@@ -130,11 +137,23 @@ int main(void){
         break;
       case 0x02:
         {
+//copy config word
           enter_prog_mode();
-          for (int i=0;i<FLASH_SIZE;i++){
+          psend(0x04,6);
+          flash[0x3ff]=pread();
+          exit_prog_mode();
+          enter_prog_mode();
+          for (int i=0;i<512;i++){//copy user program memory
             psend(0x06,6);
             psend(0x04,6);
             flash[i]=pread();
+          }
+//copy userid and backup osccal
+          unsigned short *ptr=flash[0x200];      
+          for (int i=0;i<5;i++){
+            psend(0x06,6);            
+            psend(0x04,6);
+            *(ptr++)=pread();           
           }
           exit_prog_mode();
           usart_tx(0x01);
@@ -147,8 +166,9 @@ int main(void){
           usart_rx(&buf);        
           adr|=buf;
           usart_rx(&buf);
-          adr=adr>>1;
           unsigned short *ptr=flash+adr;
+          if (adr==0xfff)
+            ptr=&config_bits;
           unsigned char len=buf;
           for (int i=0;i<len;i++){
             usart_rx(&buf);
@@ -163,7 +183,17 @@ int main(void){
         {
           pclear();
           enter_prog_mode();
-          for (int i=0;i<FLASH_SIZE;i++){
+          psend(0x02,6);
+          psend(0xff,1);//start bit      
+          psend(flash[0x3ff],12);//data
+          psend(0xff,3);//stop plus 2 msb ignored
+          psend(0x08,6);
+          _delay_ms(2);
+          psend(0x0e,6);
+          _delay_us(200);         
+          exit_prog_mode();
+          enter_prog_mode();
+          for (int i=0;i<0x205;i++){//copy everything up to the backup OSCCAL word
             psend(0x06,6);
             if (flash[i]==0xffff)
               continue;
@@ -182,6 +212,7 @@ int main(void){
         break;
       case 0x05:
         memset(flash,0xff,sizeof(flash));
+        config_bits=0xffff;
         usart_tx(0x01);        
         break;
       case 0x06:
@@ -191,6 +222,8 @@ int main(void){
           usart_rx(&buf);
           adr|=buf;
           unsigned short *ptr=flash+adr;
+          if (adr==0x3ff)
+            ptr=&config_bits;
 //todo check address is in range                 
           usart_tx(*ptr>>8);
           usart_tx(*ptr);
