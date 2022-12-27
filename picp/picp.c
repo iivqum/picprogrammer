@@ -45,10 +45,11 @@ unsigned char hex2byte(unsigned char h){
 }
 
 void debug_flash_buffer(void){
-	for (unsigned short i=0;i<FLASH_SIZE*2;i++){
+	for (unsigned short i=0;i<FLASH_SIZE;i++){
 		writebyte(0x06);
 		writebyte(i>>8);
 		writebyte(i&0xff);
+		printf("%02x ",readbyte());
 		printf("%02x ",readbyte());
 		if ((i+1)%35==0)
 			printf("\n");
@@ -155,7 +156,7 @@ it is necessary to use an extended address space
 */
 					if (rd==0x01){
 						eof=1;
-					}else{
+					}else if(rd==0x00){
 						unsigned char checksum=ln+adr1+adr2+rd;
 						for (int i=0;i<ln;i++){
 							c=(hex2byte(fgetc(fp))<<4)|hex2byte(fgetc(fp));
@@ -181,7 +182,7 @@ inside the arduino's internal buffer, this buffer is copied into the pic
 						writebyte(0x03);
 						writebyte(adr1);
 						writebyte(adr2);	
-						writebyte(ln);
+						writebyte(ln>>1);
 						for (int i=0;i<ln;i++)
 							writebyte(data[i]);
 //waits till the aurdino is done processing the data
@@ -195,7 +196,7 @@ inside the arduino's internal buffer, this buffer is copied into the pic
 //for some reason, however a while loop works. I'll need to find out why
 			while(readbyte());
 			printf("done\n");
-			//debug_pic_memory();
+			debug_pic_memory();
 		}
 	}else if(!strcmp(argv[2],"r")){
 		fp=readfile(argv[3]);

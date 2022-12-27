@@ -9,13 +9,10 @@
 
 /*
 this implementation is specific to the PIC10F202, not tried on other pics
-
-the program memory needs to be cleared to all 1s before programming
 */
 
-#define FLASH_SIZE 512
-
-unsigned short flash[FLASH_SIZE];
+#define FLASH_SIZE 512//in words
+unsigned short flash[FLASH_SIZE];//each byte grouping is big endian
 
 void pclk1(void){PPORT|=(1<<PCLK);}
 void pclk0(void){PPORT&=~(1<<PCLK);}
@@ -65,7 +62,7 @@ void usart_rx(unsigned char *d){
   *d=UDR0;
 }
 
-void psend(unsigned short d,unsigned char c){
+void psend(unsigned short d,unsigned char c){     
   pdatd1();
   for (unsigned char i=0;i<c;i++){
     pclk1();
@@ -78,12 +75,12 @@ void psend(unsigned short d,unsigned char c){
     pclk0();
     _delay_us(10);
   }
-  pdat0();
+  pdatd0();
+  pdat0();  
 }
 
 void pclear(){
   enter_prog_mode();
-  usart_tx(0x03);
   psend(0x09,6);
   _delay_ms(10);
   exit_prog_mode();
@@ -105,8 +102,8 @@ unsigned short pread(void){
   }
 //ignore stop bit
   pcycle();
-  pdatd1();
   pdat0();
+  pdatd1();
   return buf;
 }
 
@@ -132,14 +129,16 @@ int main(void){
         usart_tx(0x02);
         break;
       case 0x02:
-        enter_prog_mode();
-        for (int i=0;i<FLASH_SIZE;i++){
-          psend(0x06,6);
-          psend(0x04,6);
-          flash[i]=pread();
-        }
-        exit_prog_mode();
-        usart_tx(0x01);        
+        {
+          enter_prog_mode();
+          for (int i=0;i<FLASH_SIZE;i++){
+            psend(0x06,6);
+            psend(0x04,6);
+            flash[i]=pread();
+          }
+          exit_prog_mode();
+          usart_tx(0x01);
+        }        
         break;
       case 0x03:
         {
@@ -147,35 +146,39 @@ int main(void){
           adr=buf<<8;
           usart_rx(&buf);        
           adr|=buf;
-          usart_rx(&buf);         
-          unsigned char *pos=(unsigned char*)&flash[adr];
+          usart_rx(&buf);
+          adr=adr>>1;
+          unsigned short *ptr=flash+adr;
           unsigned char len=buf;
           for (int i=0;i<len;i++){
-            usart_rx(&buf);            
-            *pos=buf;
-            pos++;                                
+            usart_rx(&buf);
+            *ptr=buf;
+            usart_rx(&buf);
+            *(ptr++)|=buf<<8;                      
           }
           usart_tx(0x01);
         }
         break;
       case 0x04:
-        pclear();
-        enter_prog_mode();
-        for (int i=0;i<FLASH_SIZE;i++){
-          psend(0x06,6);
-          if (flash[i]==0xffff)
-            continue;
-          psend(0x02,6);
-          psend(0x01,1);//start bit
-          psend(flash[i],12);//data
-          psend(0xff,3);//stop plus 2 msb ignored
-          psend(0x08,6);
-          _delay_ms(2);
-          psend(0x0e,6);
-          _delay_us(200);
+        {
+          pclear();
+          enter_prog_mode();
+          for (int i=0;i<FLASH_SIZE;i++){
+            psend(0x06,6);
+            if (flash[i]==0xffff)
+              continue;
+            psend(0x02,6);
+            psend(0xff,1);//start bit      
+            psend(flash[i],12);//data
+            psend(0xff,3);//stop plus 2 msb ignored
+            psend(0x08,6);
+            _delay_ms(2);
+            psend(0x0e,6);
+            _delay_us(200);
+          }
+          exit_prog_mode();
+          usart_tx(0x01);
         }
-        exit_prog_mode();
-        usart_tx(0x01);
         break;
       case 0x05:
         memset(flash,0xff,sizeof(flash));
@@ -183,14 +186,14 @@ int main(void){
         break;
       case 0x06:
         {
-          unsigned char *ptr=(unsigned char*)flash;
           usart_rx(&buf);
           adr=buf<<8;
           usart_rx(&buf);
           adr|=buf;
-          if ((adr>>1)>=FLASH_SIZE)
-            adr=0;          
-          usart_tx(ptr[adr]);
+          unsigned short *ptr=flash+adr;
+//todo check address is in range                 
+          usart_tx(*ptr>>8);
+          usart_tx(*ptr);
         }
         break;
     }

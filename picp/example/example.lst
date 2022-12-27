@@ -1,0 +1,158 @@
+MPASM  5.51                       EXAMPLE.ASM   12-26-2022  17:42:38         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001  list p=pic10f202
+                      00002 
+                      00003  #include p10f202.inc
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ;  MPASM PIC10F202 processor include
+                      00005 ; 
+                      00006 ;  (c) Copyright 1999-2013 Microchip Technology, All rights reserved
+                      00007 ;==========================================================================
+                      00008 
+                      00150         LIST
+                      00004 
+  00000008            00005 ca equ 0x08
+  00000009            00006 cb equ 0x09
+                      00007 
+0000   0CC7           00008  movlw b'11000111';option register bits
+0001   0002           00009  option
+                      00010 
+                      00011 ;setup io
+0002   0C00           00012  movlw 0x00
+0003   0026           00013  movwf GPIO
+0004   0006           00014  TRIS GPIO
+                      00015 
+0005   0A12           00016  goto main_loop
+                      00017 
+0006                  00018 delay_1ms
+  00000008            00019 ca equ 0x08
+0006   0CFA           00020  movlw 0xfa
+0007   0028           00021  movwf ca
+0008                  00022 delay_1ms_loop
+0008   0000           00023  nop;padding to make it 4 inst cycles
+0009   02E8           00024  decfsz ca,F
+000A   0A08           00025  goto delay_1ms_loop 
+000B   0800           00026  retlw 0x00
+                      00027 
+000C                  00028 delay_250ms
+000C   0CFA           00029  movlw 0xfa
+000D   0029           00030  movwf cb
+000E                  00031 delay_250ms_loop
+000E   0906           00032  call delay_1ms
+000F   02E9           00033  decfsz cb,F
+0010   0A0E           00034  goto delay_250ms_loop
+0011   0800           00035  retlw 0x00
+                      00036 
+0012                  00037 main_loop
+0012   0266           00038  comf GPIO,F
+0013   090C           00039  call delay_250ms
+0014   0266           00040  comf GPIO,F
+0015   090C           00041  call delay_250ms
+0016   0A12           00042  goto main_loop
+                      00043 
+0017   0A17           00044  goto $
+MPASM  5.51                       EXAMPLE.ASM   12-26-2022  17:42:38         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00045 
+                      00046  end
+MPASM  5.51                       EXAMPLE.ASM   12-26-2022  17:42:38         PAGE  3
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+C                                 00000000
+CAL0                              00000001
+CAL1                              00000002
+CAL2                              00000003
+CAL3                              00000004
+CAL4                              00000005
+CAL5                              00000006
+CAL6                              00000007
+DC                                00000001
+F                                 00000001
+FOSC4                             00000000
+FSR                               00000004
+GP0                               00000000
+GP1                               00000001
+GP2                               00000002
+GP3                               00000003
+GPIO                              00000006
+GPWUF                             00000007
+INDF                              00000000
+NOT_GPPU                          00000006
+NOT_GPWU                          00000007
+NOT_PD                            00000003
+NOT_TO                            00000004
+OSCCAL                            00000005
+PCL                               00000002
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+STATUS                            00000003
+T0CS                              00000005
+T0SE                              00000004
+TMR0                              00000001
+TRISIO0                           00000000
+TRISIO1                           00000001
+TRISIO2                           00000002
+TRISIO3                           00000003
+W                                 00000000
+Z                                 00000002
+_CONFIG                           00000FFF
+_CP_OFF                           00000FFF
+_CP_ON                            00000FF7
+_IDLOC0                           00000200
+_IDLOC1                           00000201
+_IDLOC2                           00000202
+_IDLOC3                           00000203
+_IntRC_OSC                        00000FFF
+_MCLRE_OFF                        00000FEF
+_MCLRE_ON                         00000FFF
+_OSC_IntRC                        00000FFF
+_WDTE_OFF                         00000FFB
+_WDTE_ON                          00000FFF
+_WDT_OFF                          00000FFB
+MPASM  5.51                       EXAMPLE.ASM   12-26-2022  17:42:38         PAGE  4
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_WDT_ON                           00000FFF
+__10F202                          00000001
+ca                                00000008
+cb                                00000009
+delay_1ms                         00000006
+delay_1ms_loop                    00000008
+delay_250ms                       0000000C
+delay_250ms_loop                  0000000E
+main_loop                         00000012
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+0000 : XXXXXXXXXXXXXXXX XXXXXXXX-------- ---------------- ----------------
+
+All other memory blocks unused.
+
+Program Memory Words Used:    24
+Program Memory Words Free:   488
+
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+
