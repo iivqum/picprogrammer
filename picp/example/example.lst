@@ -1,4 +1,4 @@
-MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  1
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  18:55:11         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -24,8 +24,8 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00009 
 01FF                  00010  org 0x1ff
 01FF   0CDE           00011  movlw 0xde
-0200                  00012  org 0x200
-0200   0CED           00013  movlw 0xed
+0204                  00012  org 0x204
+0204   0CFE           00013  movlw 0xfe
 0000                  00014  org 0x000
                       00015 
 0000   0CC7           00016  movlw b'11000111';option register bits
@@ -57,7 +57,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0010   0A0E           00042  goto delay_250ms_loop
 0011   0800           00043  retlw 0x00
                       00044 
-MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  2
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  18:55:11         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -71,7 +71,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0016   0A12           00050  goto main_loop
                       00051 
                       00052  end
-MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  3
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  18:55:11         PAGE  3
 
 
 SYMBOL TABLE
@@ -130,7 +130,7 @@ _OSC_IntRC                        00000FFF
 _WDTE_OFF                         00000FFB
 _WDTE_ON                          00000FFF
 _WDT_OFF                          00000FFB
-MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  4
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  18:55:11         PAGE  4
 
 
 SYMBOL TABLE
@@ -151,7 +151,7 @@ MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
 
 0000 : XXXXXXXXXXXXXXXX XXXXXXX--------- ---------------- ----------------
 01C0 : ---------------- ---------------- ---------------- ---------------X
-0200 : X--------------- ---------------- ---------------- ----------------
+0200 : ----X----------- ---------------- ---------------- ----------------
 0FC0 : ---------------- ---------------- ---------------- ---------------X
 
 All other memory blocks unused.

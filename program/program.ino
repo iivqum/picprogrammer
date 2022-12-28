@@ -83,9 +83,15 @@ void psend(unsigned short d,unsigned char c){
 
 void perase(void){
   enter_prog_mode();
+  psend(0x06,6);
   psend(0x09,6);
   _delay_ms(10);
   exit_prog_mode();
+}
+
+void pmovepc(unsigned short c){
+  for (int i=0;i<c;i++)
+    psend(0x06,6);
 }
 
 void pwrite12(unsigned short d){
@@ -179,18 +185,37 @@ int main(void){
         break;
       case 0x04:
         {
-          perase();
-          enter_prog_mode();
-          pwrite12(config_bits);
+          unsigned short bosccal,rv;
+//store osccal values          
+          enter_prog_mode();             
+          pmovepc(0x1ff+1);
+          rv=pread();
+          pmovepc(5);
+          bosccal=pread();
           exit_prog_mode();
+//erase mem  
+          perase();
+//write program memory          
           enter_prog_mode();
           for (int i=0;i<FLASH_BUFFER_SIZE;i++){
             psend(0x06,6);
+//restore osccal bits
+            if (i==0x1ff){
+              pwrite12(rv);
+              continue; 
+            }else if (i==0x204){
+              pwrite12(bosccal);
+              continue;
+            }          
             if (flash[i]==0xffff)
               continue;
             pwrite12(flash[i]);
           }
           exit_prog_mode();
+//write config
+          enter_prog_mode();
+          pwrite12(config_bits);
+          exit_prog_mode();          
           usart_tx(0x01);
         }
         break;
