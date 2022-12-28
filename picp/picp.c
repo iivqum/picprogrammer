@@ -44,30 +44,33 @@ unsigned char hex2byte(unsigned char h){
 	return 0;
 }
 
-void debug_flash_buffer(void){
+unsigned short readword(unsigned short a){
 	unsigned char hi,lo;
 	unsigned short word;
 	writebyte(0x06);
-	writebyte(0x03);
-	writebyte(0xff);
+	writebyte(a>>8);
+	writebyte(a&0xff);
 	hi=readbyte();
 	lo=readbyte();
 	word=(hi<<8)|lo;
-	printf("CONFIG BITS: %03x\n\n",word);
+	return word;
+}
+
+void debug_flash_buffer(void){
 	for (unsigned short i=0;i<0x205;i++){
-		writebyte(0x06);
-		writebyte(i>>8);
-		writebyte(i&0xff);
-		hi=readbyte();
-		lo=readbyte();5
-		word=(hi<<8)|lo;
-		printf("%03x ",word);
+		printf("%03x ",readword(i));
 		if ((i+1)%12==0)
 			printf("\n");
 	}
 }
 
 void debug_pic_memory(void){
+	printf("------------------\n");
+	printf("PROGRAM MEMORY\n\n");	
+	printf("CONFIG BITS: %03x\n",readword(0x3ff));
+	printf("RESET VECTOR: %03x\n",readword(0x1ff));
+	printf("CALIBRATION BITS: %03x\n",readword(0x204));	
+	printf("------------------\n\n");
 	writebyte(0x02);
 	readbyte();
 	debug_flash_buffer();
@@ -216,9 +219,6 @@ inside the arduino's internal buffer, this buffer is copied into the pic
 			//todo
 		}
 */
-		printf("------------------\n");
-		printf("PROGRAM MEMORY\n");
-		printf("------------------\n");
 		debug_pic_memory();
 	}else{
 		printf("invalid command\n");
