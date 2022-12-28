@@ -1,4 +1,4 @@
-MPASM  5.51                       EXAMPLE.ASM   12-27-2022  15:30:00         PAGE  1
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -22,50 +22,56 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
   00000008            00007 ca equ 0x08
   00000009            00008 cb equ 0x09
                       00009 
-0000   0CC7           00010  movlw b'11000111';option register bits
-0001   0002           00011  option
-                      00012 
-                      00013 ;setup io
-0002   0C00           00014  movlw 0x00
-0003   0026           00015  movwf GPIO
-0004   0006           00016  TRIS GPIO
-                      00017 
-0005   0A12           00018  goto main_loop
-                      00019 
-0006                  00020 delay_1ms
-  00000008            00021 ca equ 0x08
-0006   0CFA           00022  movlw 0xfa
-0007   0028           00023  movwf ca
-0008                  00024 delay_1ms_loop
-0008   0000           00025  nop;padding to make it 4 inst cycles
-0009   02E8           00026  decfsz ca,F
-000A   0A08           00027  goto delay_1ms_loop 
-000B   0800           00028  retlw 0x00
-                      00029 
-000C                  00030 delay_250ms
-000C   0CFA           00031  movlw 0xfa
-000D   0029           00032  movwf cb
-000E                  00033 delay_250ms_loop
-000E   0906           00034  call delay_1ms
-000F   02E9           00035  decfsz cb,F
-0010   0A0E           00036  goto delay_250ms_loop
-0011   0800           00037  retlw 0x00
-                      00038 
-0012                  00039 main_loop
-0012   0266           00040  comf GPIO,F
-0013   090C           00041  call delay_250ms
-0014   0266           00042  comf GPIO,F
-0015   090C           00043  call delay_250ms
-0016   0A12           00044  goto main_loop
-MPASM  5.51                       EXAMPLE.ASM   12-27-2022  15:30:00         PAGE  2
+01FF                  00010  org 0x1ff
+01FF   0CDE           00011  movlw 0xde
+0200                  00012  org 0x200
+0200   0CED           00013  movlw 0xed
+0000                  00014  org 0x000
+                      00015 
+0000   0CC7           00016  movlw b'11000111';option register bits
+0001   0002           00017  option
+                      00018 
+                      00019 ;setup io
+0002   0C00           00020  movlw 0x00
+0003   0026           00021  movwf GPIO
+0004   0006           00022  TRIS GPIO
+                      00023 
+0005   0A12           00024  goto main_loop
+                      00025 
+0006                  00026 delay_1ms
+  00000008            00027 ca equ 0x08
+0006   0CFA           00028  movlw 0xfa
+0007   0028           00029  movwf ca
+0008                  00030 delay_1ms_loop
+0008   0000           00031  nop;padding to make it 4 inst cycles
+0009   02E8           00032  decfsz ca,F
+000A   0A08           00033  goto delay_1ms_loop 
+000B   0800           00034  retlw 0x00
+                      00035 
+000C                  00036 delay_250ms
+000C   0CFA           00037  movlw 0xfa
+000D   0029           00038  movwf cb
+000E                  00039 delay_250ms_loop
+000E   0906           00040  call delay_1ms
+000F   02E9           00041  decfsz cb,F
+0010   0A0E           00042  goto delay_250ms_loop
+0011   0800           00043  retlw 0x00
+                      00044 
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00045 
-                      00046  end
-MPASM  5.51                       EXAMPLE.ASM   12-27-2022  15:30:00         PAGE  3
+0012                  00045 main_loop
+0012   0266           00046  comf GPIO,F
+0013   090C           00047  call delay_250ms
+0014   0266           00048  comf GPIO,F
+0015   090C           00049  call delay_250ms
+0016   0A12           00050  goto main_loop
+                      00051 
+                      00052  end
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  3
 
 
 SYMBOL TABLE
@@ -124,7 +130,7 @@ _OSC_IntRC                        00000FFF
 _WDTE_OFF                         00000FFB
 _WDTE_ON                          00000FFF
 _WDT_OFF                          00000FFB
-MPASM  5.51                       EXAMPLE.ASM   12-27-2022  15:30:00         PAGE  4
+MPASM  5.51                       EXAMPLE.ASM   12-28-2022  17:51:26         PAGE  4
 
 
 SYMBOL TABLE
@@ -144,12 +150,14 @@ main_loop                         00000012
 MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
 
 0000 : XXXXXXXXXXXXXXXX XXXXXXX--------- ---------------- ----------------
+01C0 : ---------------- ---------------- ---------------- ---------------X
+0200 : X--------------- ---------------- ---------------- ----------------
 0FC0 : ---------------- ---------------- ---------------- ---------------X
 
 All other memory blocks unused.
 
-Program Memory Words Used:    23
-Program Memory Words Free:   489
+Program Memory Words Used:    24
+Program Memory Words Free:   488
 
 
 Errors   :     0

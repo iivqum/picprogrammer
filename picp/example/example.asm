@@ -7,6 +7,10 @@
 ca equ 0x08
 cb equ 0x09
 
+ org 0x1ff
+ movlw 0xde
+ org 0x000
+
  movlw b'11000111';option register bits
  option
 

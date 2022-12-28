@@ -59,7 +59,7 @@ void debug_flash_buffer(void){
 		writebyte(i>>8);
 		writebyte(i&0xff);
 		hi=readbyte();
-		lo=readbyte();
+		lo=readbyte();5
 		word=(hi<<8)|lo;
 		printf("%03x ",word);
 		if ((i+1)%12==0)

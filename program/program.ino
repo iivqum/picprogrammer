@@ -81,20 +81,27 @@ void psend(unsigned short d,unsigned char c){
   pdat0();  
 }
 
-void pclear(void){
+void perase(void){
   enter_prog_mode();
   psend(0x09,6);
   _delay_ms(10);
   exit_prog_mode();
 }
 
-void pincr_pc(int n){
-  for (int i=1;i<n;i++)
-    psend(0x06,6);
+void pwrite12(unsigned short d){
+  psend(0x02,6);
+  psend(0xff,1);//start bit      
+  psend(d,12);//data
+  psend(0xff,3);//stop plus 2 msb ignored
+  psend(0x08,6);
+  _delay_ms(2);
+  psend(0x0e,6);
+  _delay_us(200);  
 }
 
 unsigned short pread(void){
   unsigned short buf=0x0000;
+  psend(0x04,6);
 //disable pullup and make data pin an input
   pdat0();
   pdatd0();
@@ -139,21 +146,12 @@ int main(void){
         {
 //copy config word
           enter_prog_mode();
-          psend(0x04,6);
-          flash[0x3ff]=pread();
+          config_bits=pread();
           exit_prog_mode();
           enter_prog_mode();
-          for (int i=0;i<512;i++){//copy user program memory
+          for (int i=0;i<FLASH_BUFFER_SIZE;i++){
             psend(0x06,6);
-            psend(0x04,6);
             flash[i]=pread();
-          }
-//copy userid and backup osccal
-          unsigned short *ptr=flash[0x200];      
-          for (int i=0;i<5;i++){
-            psend(0x06,6);            
-            psend(0x04,6);
-            *(ptr++)=pread();           
           }
           exit_prog_mode();
           usart_tx(0x01);
@@ -181,30 +179,16 @@ int main(void){
         break;
       case 0x04:
         {
-          pclear();
+          perase();
           enter_prog_mode();
-          psend(0x02,6);
-          psend(0xff,1);//start bit      
-          psend(flash[0x3ff],12);//data
-          psend(0xff,3);//stop plus 2 msb ignored
-          psend(0x08,6);
-          _delay_ms(2);
-          psend(0x0e,6);
-          _delay_us(200);         
+          pwrite12(config_bits);
           exit_prog_mode();
           enter_prog_mode();
-          for (int i=0;i<0x205;i++){//copy everything up to the backup OSCCAL word
+          for (int i=0;i<FLASH_BUFFER_SIZE;i++){
             psend(0x06,6);
             if (flash[i]==0xffff)
               continue;
-            psend(0x02,6);
-            psend(0xff,1);//start bit      
-            psend(flash[i],12);//data
-            psend(0xff,3);//stop plus 2 msb ignored
-            psend(0x08,6);
-            _delay_ms(2);
-            psend(0x0e,6);
-            _delay_us(200);
+            pwrite12(flash[i]);
           }
           exit_prog_mode();
           usart_tx(0x01);
